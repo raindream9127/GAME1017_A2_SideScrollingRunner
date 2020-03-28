@@ -4,10 +4,10 @@
 class Sprite
 {
 private:
-	SDL_Rect m_dst;
-	SDL_Color m_col;
+	SDL_Rect m_src, m_dst;
+	SDL_Texture* m_pTexture;
 public:
-	Sprite(int x, int y);
+	Sprite(SDL_Rect s, SDL_Rect d, SDL_Texture* texture);
 	void Render();
 	friend class Box;
 };
@@ -15,10 +15,10 @@ public:
 class Box
 {
 private:
-	int m_x, m_y;
+	int m_x;
 	Sprite* m_sprite;
 public:
-	Box(int x, int y, bool hasSprite = false);
+	Box(SDL_Rect s, SDL_Rect d, SDL_Texture* texture, bool hasSprite = false);
 	~Box();
 	void Update();
 	void Render();

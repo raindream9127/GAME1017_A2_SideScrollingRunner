@@ -34,7 +34,9 @@ public:
 class GameState : public State
 {
 private:
-	vector< vector<Box*> > m_vec;
+	vector<Box*> m_vec;
+	SDL_Texture* m_pObsText;
+	int m_spawnCtr;
 public:
 	GameState();
 	void Enter();

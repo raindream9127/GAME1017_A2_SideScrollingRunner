@@ -106,14 +106,15 @@ GameState::GameState() {}
 
 void GameState::Enter()
 { 
+	m_pObsText = IMG_LoadTexture(Engine::Instance().GetRenderer(), "Img/Obstacles.png");
 	m_vec.reserve(8);
 	// Create the vector now.
 	for (int i = 0; i < 9; i++)
 	{
-		vector<Box*> temp;
-		temp.push_back(new Box(128 * i, 384)); // Create empty box.
+		Box* temp = new Box({ 128, 128, 128, 128 }, { 128 * i, 384, 128, 128 }, m_pObsText);  // 9 empty boxes
 		m_vec.push_back(temp);
-	}
+	}	
+	m_spawnCtr = 2;
 }
 
 void GameState::HandleEvents(SDL_Event& event)
@@ -133,29 +134,34 @@ void GameState::HandleEvents(SDL_Event& event)
 void GameState::Update()
 {
 	// Check for out of bounds.
-	if ((m_vec[0])[0]->GetX() <= -128) // Fully off-screen.
+	if (m_vec[0]->GetX() <= -128) // Fully off-screen.
 	{
-		// Clean the column vector.
-		for (int i = 0; i < (int)m_vec[0].size(); i++)
-		{
-			delete m_vec[0][i];
-			m_vec[0][i] = nullptr;
-		}
+		// Clean the first element in the vector.
+		delete m_vec[0];
+		m_vec[0] = nullptr;
 		m_vec.erase(m_vec.begin()); // Pop the front element.
-		// Create a new column vector.
-		vector<Box*> temp;
-		int numrows = 1 + rand() % 4; // 1-4 Boxes per column!
-		for (int row = 0; row < numrows; row++)
-			temp.push_back(new Box(128 * 8, 384 - 128 * row, rand() % 2)); // Create empty box.
+		// Create a new box at the end.
+		Box* temp;
+
+		if (++m_spawnCtr == 3)
+		{
+			m_spawnCtr = 0;
+			// Random choice of obstacle
+
+
+			// Circular saw
+			temp = new Box({ 128, 128, 128, 128 }, { 128 * 8, 384, 128, 128 }, m_pObsText, true);
+		}
+		else
+		{
+			temp = new Box({ 128, 128, 128, 128 }, { 128 * 8, 384, 128, 128 }, m_pObsText);
+		}
 		m_vec.push_back(temp);
 	}
 	// Scroll the boxes.
 	for (int col = 0; col < 9; col++)
 	{
-		for (int row = 0; row < (int)m_vec[col].size(); row++)
-		{
-			(m_vec[col])[row]->Update(); // If the parenthesis make it easier to understand.
-		}
+		m_vec[col]->Update();
 	}
 }
 
@@ -166,10 +172,7 @@ void GameState::Render()
 	// Render stuff.
 	for (int col = 0; col < 9; col++)
 	{
-		for (int row = 0; row < (int)m_vec[col].size(); row++)
-		{
-			(m_vec[col])[row]->Render();
-		}
+		m_vec[col]->Render();
 	}
 	// Draw anew.
 	SDL_RenderPresent(Engine::Instance().GetRenderer());
@@ -179,15 +182,12 @@ void GameState::Exit()
 { 
 	for (int col = 0; col < 9; col++)
 	{
-		for (int row = 0; row < (int)m_vec[col].size(); row++)
-		{
-			delete m_vec[col][row]; // vector.erase() won't deallocate memory through pointer.
-			m_vec[col][row] = nullptr; // Optional again, but good practice.
-		}
-		m_vec[col].clear();
+		delete m_vec[col]; // vector.erase() won't deallocate memory through pointer.
+		m_vec[col] = nullptr; // Optional again, but good practice.
 	}
 	m_vec.clear();
 	m_vec.shrink_to_fit();
+	SDL_DestroyTexture(m_pObsText);
 }
 
 void GameState::Resume() { cout << "Resuming Game..." << endl; }

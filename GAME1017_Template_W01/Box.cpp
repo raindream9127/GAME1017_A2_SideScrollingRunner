@@ -3,22 +3,18 @@
 #include "SDL.h"
 #define SCROLLSPD 2
 
-Sprite::Sprite(int x, int y) : m_dst({ x, y, 128, 128 })
-{
-	m_col = { (Uint8)(rand()%256), (Uint8)(rand()%256), (Uint8)(rand()%256), (Uint8)255 };
-}
+Sprite::Sprite(SDL_Rect s, SDL_Rect d, SDL_Texture* texture) : m_src(s), m_dst(d) , m_pTexture(texture) {}
 
 void Sprite::Render()
 {
-	SDL_SetRenderDrawColor(Engine::Instance().GetRenderer(), m_col.r, m_col.g, m_col.b, m_col.a);
-	SDL_RenderFillRect(Engine::Instance().GetRenderer(), &m_dst);
+	SDL_RenderCopy(Engine::Instance().GetRenderer(), m_pTexture, &m_src, &m_dst);
 }
 
-Box::Box(int x, int y, bool hasSprite) : m_x(x), m_y(y), m_sprite(nullptr)
+Box::Box(SDL_Rect s, SDL_Rect d, SDL_Texture* texture, bool hasSprite) : m_x(d.x), m_sprite(nullptr)
 {
 	if (hasSprite)
 	{
-		m_sprite = new Sprite(x, y);
+		m_sprite = new Sprite(s, d, texture);
 	}
 }
 
@@ -48,7 +44,7 @@ void Box::Render()
 	else
 	{
 		SDL_SetRenderDrawColor(Engine::Instance().GetRenderer(), 255, 0, 255, 255);
-		SDL_Rect temp = { m_x, m_y, 128, 128 };
+		SDL_Rect temp = { m_x, 384, 128, 128 };
 		SDL_RenderDrawRect(Engine::Instance().GetRenderer(), &temp);
 	}
 }

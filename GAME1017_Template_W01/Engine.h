@@ -18,6 +18,7 @@ private: // Private properties.
 	Uint32 m_start, m_end, m_delta, m_fps; // Fixed timestep variables.
 	SDL_Window* m_pWindow; // This represents the SDL window.
 	SDL_Renderer* m_pRenderer; // This represents the buffer to draw to.
+
 	FSM* m_pFSM; // Pointer to the StateMachine object created dynamically.
 	SDL_Point m_MousePos;
 	bool m_MouseState[3] = { 0,0,0 }; // Button up/down. Left, Middle, Right.
