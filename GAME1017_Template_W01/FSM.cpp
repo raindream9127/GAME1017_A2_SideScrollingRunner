@@ -128,6 +128,12 @@ void GameState::HandleEvents(SDL_Event& event)
 		if (event.key.keysym.sym == SDLK_ESCAPE)
 			Engine::Instance().QuitGame();
 		break;
+	case SDL_KEYUP:
+		if (event.key.keysym.sym == SDLK_a || event.key.keysym.sym == SDLK_d)
+			m_pPlayer->SetAccelX(0.0);
+		if (event.key.keysym.sym == SDLK_SPACE)
+			m_bSpaceOk = true;
+		break;
 	}
 }
 
@@ -163,6 +169,43 @@ void GameState::Update()
 	{
 		m_vec[col]->Update();
 	}
+	// Updates the player
+	switch (m_pPlayer->GetAnimState())
+	{
+	case RUNNING:
+		if (Engine::Instance().KeyDown(SDL_SCANCODE_S))
+		{
+			m_pPlayer->SetRolling();
+		}
+		else if (Engine::Instance().KeyDown(SDL_SCANCODE_SPACE) && m_bSpaceOk && m_pPlayer->IsGrounded())
+		{
+			m_bSpaceOk = false; // This just prevents repeated jumps when holding spacebar.
+			m_pPlayer->SetAccelY(-JUMPFORCE); // Sets the jump force.
+			m_pPlayer->SetGrounded(false);
+			m_pPlayer->SetJumping();
+		}
+		break;
+	case ROLLING:
+		if (!Engine::Instance().KeyDown(SDL_SCANCODE_S))
+		{
+			m_pPlayer->SetRunning();
+		}
+		break;
+	}
+	if (Engine::Instance().KeyDown(SDL_SCANCODE_A))
+	{
+		m_pPlayer->SetDir(-1);
+		m_pPlayer->MoveX();
+	}
+	else if (Engine::Instance().KeyDown(SDL_SCANCODE_D))
+	{
+		m_pPlayer->SetDir(1);
+		m_pPlayer->MoveX();
+	}
+
+	m_pPlayer->Update();
+	m_pPlayer->SetAccelY(0.0); // After jump, reset vertical acceleration.
+	CheckCollision(); // Easy to comment out a function call if needed.
 }
 
 void GameState::Render()
@@ -174,6 +217,14 @@ void GameState::Render()
 	{
 		m_vec[col]->Render();
 	}
+	SDL_SetRenderDrawColor(Engine::Instance().GetRenderer(), 0, 0, 0, 255);
+	SDL_RenderClear(Engine::Instance().GetRenderer()); // Clear the screen with the draw color.
+	// Draw the player box.
+	SDL_RenderCopy(Engine::Instance().GetRenderer(), m_pPlayerText, m_pPlayer->GetSrcP(), m_pPlayer->GetDstP());
+	// Draw the platforms.
+	SDL_SetRenderDrawColor(Engine::Instance().GetRenderer(), 192, 64, 0, 255);
+	for (int i = 0; i < 4; i++)
+		SDL_RenderFillRect(Engine::Instance().GetRenderer(), m_pPlatforms[i]->GetDstP());
 	// Draw anew.
 	SDL_RenderPresent(Engine::Instance().GetRenderer());
 }
@@ -187,6 +238,10 @@ void GameState::Exit()
 	}
 	m_vec.clear();
 	m_vec.shrink_to_fit();
+	delete m_pPlayer;
+	for (int i = 0; i < 4; i++)
+		delete m_pPlatforms[i];
+	SDL_DestroyTexture(m_pPlayerText);
 	SDL_DestroyTexture(m_pObsText);
 }
 
@@ -194,7 +249,38 @@ void GameState::Resume() { cout << "Resuming Game..." << endl; }
 
 void GameState::CheckCollision()
 {
-
+	for (int i = 0; i < 4; i++)
+	{
+		if (SDL_HasIntersection(m_pPlayer->GetDstP(), m_pPlatforms[i]->GetDstP()))
+		{
+			if ((m_pPlayer->GetDstP()->y + m_pPlayer->GetDstP()->h) - m_pPlayer->GetVelY() <= m_pPlatforms[i]->GetDstP()->y)
+			{ // Collision from top.
+				m_pPlayer->SetGrounded(true);
+				if (m_pPlayer->GetAnimState() == JUMPING)
+				{
+					m_pPlayer->SetRunning();
+				}
+				m_pPlayer->SetVelY(0.0); // Stop the player from moving vertically. We aren't modifying gravity.
+				m_pPlayer->SetY(m_pPlatforms[i]->GetDstP()->y - m_pPlayer->GetDstP()->h - 1);
+			}
+			else if (m_pPlayer->GetDstP()->y - m_pPlayer->GetVelY() >= m_pPlatforms[i]->GetDstP()->y + m_pPlatforms[i]->GetDstP()->h)
+			{ // Collision from bottom.
+				m_pPlayer->SetVelY(0.0); // Stop the player from moving vertically. We aren't modifying gravity.
+				m_pPlayer->SetY(m_pPlatforms[i]->GetDstP()->y + m_pPlatforms[i]->GetDstP()->h + 1);
+			}
+			else if ((m_pPlayer->GetDstP()->x + m_pPlayer->GetDstP()->w) - m_pPlayer->GetVelX() <= m_pPlatforms[i]->GetDstP()->x)
+			{ // Collision from left.
+				m_pPlayer->SetVelX(0.0); // Stop the player from moving horizontally.
+				m_pPlayer->SetX(m_pPlatforms[i]->GetDstP()->x - m_pPlayer->GetDstP()->w - 1);
+			}
+			else if (m_pPlayer->GetDstP()->x - m_pPlayer->GetVelX() >= m_pPlatforms[i]->GetDstP()->x + m_pPlatforms[i]->GetDstP()->w)
+			{ // Collision from right.
+				m_pPlayer->SetVelX(0.0); // Stop the player from moving horizontally.
+				m_pPlayer->SetX(m_pPlatforms[i]->GetDstP()->x + m_pPlatforms[i]->GetDstP()->w + 1);
+			}
+			break;
+		}
+	}
 }
 #pragma endregion
 

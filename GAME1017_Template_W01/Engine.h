@@ -6,6 +6,8 @@
 #include <vector>
 #include "Box.h"
 #include "FSM.h"
+#define GRAV 20.0
+#define JUMPFORCE 50.0
 using namespace std;
 // Do not include any macros, initialized properties or full function definitions in this header.
 

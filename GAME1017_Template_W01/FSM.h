@@ -34,8 +34,12 @@ public:
 class GameState : public State
 {
 private:
+	Player* m_pPlayer;
+	Platform* m_pPlatforms[9];
+	bool m_bSpaceOk;
 	vector<Box*> m_vec;
 	SDL_Texture* m_pObsText;
+	SDL_Texture* m_pPlayerText;
 	int m_spawnCtr;
 public:
 	GameState();
