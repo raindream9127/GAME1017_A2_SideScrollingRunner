@@ -1,7 +1,9 @@
 #include "Box.h"
 #include "Engine.h"
 #include "SDL.h"
-#define SCROLLSPD 2
+#include <algorithm>
+#define SCROLLSPD 3
+using namespace std;
 
 Sprite::Sprite(const SDL_Rect s, const SDL_Rect d) : m_rSrc(s), m_rDst(d) 
 {}
@@ -16,48 +18,19 @@ SDL_Rect* Sprite::GetDstP()
 	return &m_rDst;
 }
 
-Box::Box(SDL_Rect s, SDL_Rect d, SDL_Texture* texture, bool hasSprite) : m_x(d.x), m_sprite(nullptr)
+SDL_Rect* Sprite::GetCollisionRect()
 {
-	if (hasSprite)
-	{
-		m_sprite = new Sprite(s, d, texture);
-	}
+	return &m_rDst;
 }
 
-Box::~Box()
+void Sprite::Render(SDL_Texture* tex)
 {
-	if (m_sprite != nullptr)
-	{
-		delete m_sprite;
-		m_sprite = nullptr; // Optional.
-	}
+	SDL_RenderCopy(Engine::Instance().GetRenderer(), tex, &m_rSrc, &m_rDst);
 }
 
-void Box::Update()
+void Sprite::Update()
 {
-	m_x -= SCROLLSPD;
-	if (m_sprite != nullptr)
-	{
-		m_sprite->m_rDst.x = m_x;
-	}
-}
-
-void Box::Render()
-{
-	if (m_sprite != nullptr)
-		m_sprite->Render();
-	// Comment the below code out if you don't want to see a box for an empty sprite.
-	else
-	{
-		SDL_SetRenderDrawColor(Engine::Instance().GetRenderer(), 255, 0, 255, 255);
-		SDL_Rect temp = { m_x, 384, 128, 128 };
-		SDL_RenderDrawRect(Engine::Instance().GetRenderer(), &temp);
-	}
-}
-
-int Box::GetX()
-{
-	return m_x;
+	m_rDst.x -= SCROLLSPD;
 }
 
 void Player::SetAnimationState(STATE st, int y, int fmax, int smin, int smax)
@@ -71,7 +44,8 @@ void Player::SetAnimationState(STATE st, int y, int fmax, int smin, int smax)
 	m_iSprite = m_iSpriteMin;
 }
 
-Player::Player(const SDL_Rect s, const SDL_Rect d) :Sprite(s, d)
+Player::Player(const SDL_Rect s, const SDL_Rect d) : Sprite(s, d),
+	m_collisionRect({ d.x + d.w / 4, d.y, d.w / 2, d.h})
 {
 	m_bGrounded = false;
 	m_dAccelX = m_dAccelY = m_dVelX = m_dVelY = 0.0;
@@ -86,6 +60,11 @@ Player::Player(const SDL_Rect s, const SDL_Rect d) :Sprite(s, d)
 	SetRunning();
 }
 
+SDL_Rect* Player::GetCollisionRect()
+{
+	return &m_collisionRect;
+}
+
 void Player::Update()
 {
 	// X axis. Clamp acceleration first.
@@ -98,6 +77,15 @@ void Player::Update()
 	m_dVelY += m_dAccelY + (m_dGrav / 5); // Adjust gravity to get slower jump.
 	m_dVelY = min(max(m_dVelY, -(m_dMaxVelY * 10)), (m_dMaxVelY));
 	m_rDst.y += (int)m_dVelY;
+	// Sets up the collision rectangle
+	if (GetAnimState() != ROLLING)
+	{
+		m_collisionRect = { m_rDst.x + 32, m_rDst.y, 64, 128 };
+	}
+	else
+	{
+		m_collisionRect = { m_rDst.x + 32, m_rDst.y + 73, 55, 55 };
+	}	
 	if (fabs(m_dVelY) > m_dGrav / 4)
 	{
 		SetJumping();
@@ -113,7 +101,16 @@ void Player::Animate()
 		m_iSprite++;
 		if (m_iSprite == m_iSpriteMax)
 		{
-			m_iSprite = m_iSpriteMin;
+			if (GetAnimState() != DYING)
+			{
+				m_iSprite = m_iSpriteMin;
+			}
+			else
+			{
+				SDL_Delay(2000);
+				Engine::Instance().GetFSM().ChangeState(new LoseState);
+				return;
+			}
 		}
 	}
 	m_rSrc.x = m_rSrc.w * m_iSprite;
@@ -161,4 +158,51 @@ void Player::SetRolling()
 
 void Player::SetDeath()
 {
+	this->SetAnimationState(DYING, m_iAnimY + 128, 6, 4, 9);
 }
+
+Platform::Platform(const SDL_Rect d) : Sprite({ 1024, 512, 512, 256 }, d)
+{}
+
+MidBackground::MidBackground(const SDL_Rect d) : Sprite({ 1024, 0, 256, 512 }, d)
+{}
+
+void MidBackground::Update()
+{
+	m_rDst.x -= 2;
+}
+
+Background::Background(const SDL_Rect d) : Sprite({ 0, 0, 1024, 768 }, d)
+{}
+
+void Background::Update()
+{
+	m_rDst.x -= 1;
+}
+
+Spikes::Spikes() : Sprite({ 128, 64, 128, 64 }, {1024, 448, 128, 64})
+{}
+
+Spikewall::Spikewall() : Sprite({ 0, 0, 128, 448 }, {1024, 0, 128, 448})
+{}
+
+Circularsaw::Circularsaw() : Sprite({ 128, 128, 128, 128}, {1024, 448, 128, 128}), m_angle(0)
+{}
+
+void Circularsaw::Render(SDL_Texture * tex)
+{
+	SDL_RenderCopyEx(Engine::Instance().GetRenderer(), tex, &m_rSrc, &m_rDst, m_angle, NULL, SDL_FLIP_NONE);
+}
+
+void Circularsaw::Update()
+{
+	m_rDst.x -= SCROLLSPD;
+	m_angle += 3;
+	if (m_angle == 360)
+	{
+		m_angle = 0;
+	}
+}
+
+Flyingplatform::Flyingplatform() : Sprite({ 128, 0, 128, 40}, { 1024, 256, 128, 40})
+{}

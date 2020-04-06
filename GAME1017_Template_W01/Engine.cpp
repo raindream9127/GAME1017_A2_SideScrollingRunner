@@ -22,9 +22,20 @@ bool Engine::Init(const char* title, int xpos, int ypos, int width, int height, 
 			m_pRenderer = SDL_CreateRenderer(m_pWindow, -1, 0);
 			if (m_pRenderer != nullptr) // Renderer init success.
 			{
-				if (IMG_Init(IMG_INIT_PNG))
+				if (IMG_Init(IMG_INIT_PNG) != 0)
 				{
+					if (TTF_Init() == 0)
+					{
+						cout << "Font init success!" << endl;
+					}
+					else return false;
 
+					if (Mix_Init(MIX_INIT_MP3) != 0) // Mixer init success.
+					{
+						Mix_OpenAudio(22050, AUDIO_S16SYS, 2, 2048); // Good for most games.
+						Mix_AllocateChannels(16);
+					}
+					else return false;
 				}
 				else return false;
 			}
@@ -33,6 +44,7 @@ bool Engine::Init(const char* title, int xpos, int ypos, int width, int height, 
 		else return false; // Window init fail.
 	}
 	else return false; // SDL init fail.
+	srand((unsigned)time(NULL));
 	m_fps = (Uint32)round((1 / (double)FPS) * 1000); // Sets FPS in milliseconds and rounds.
 	m_iKeystates = SDL_GetKeyboardState(nullptr);
 	m_pFSM = new FSM();
@@ -89,7 +101,10 @@ void Engine::Clean()
 	cout << "Cleaning game." << endl;
 	SDL_DestroyRenderer(m_pRenderer);
 	SDL_DestroyWindow(m_pWindow);
+	Mix_CloseAudio();
+	Mix_Quit();
 	IMG_Quit();
+	TTF_Quit();
 	SDL_Quit();
 }
 

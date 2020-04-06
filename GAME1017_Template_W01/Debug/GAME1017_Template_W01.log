@@ -1,1 +1,8 @@
-﻿  GAME1017_Template_W01.vcxproj -> C:\Users\dengs\source\repos\GAME1017_A2_Side-Scrolling Runner\Debug\GAME1017_Template_W01.exe
+﻿  Box.cpp
+  Button.cpp
+  Engine.cpp
+  FSM.cpp
+  Main.cpp
+  TextElement.cpp
+  Generating Code...
+  GAME1017_Template_W01.vcxproj -> C:\Users\dengs\source\repos\GAME1017_A2_Side-Scrolling Runner\Debug\GAME1017_Template_W01.exe

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <SDL_image.h>
+#include "TextElement.h"
 #include "Button.h"
 #include "Box.h"
 using namespace std;
@@ -13,7 +14,7 @@ public:
 	virtual void Enter() = 0;
 	virtual void HandleEvents(SDL_Event& event);
 	virtual void Update() = 0; 
-	virtual void Render();     
+	virtual void Render() = 0;
 	virtual void Exit() = 0;
 	virtual void Resume(); 
 };
@@ -35,12 +36,20 @@ class GameState : public State
 {
 private:
 	Player* m_pPlayer;
-	Platform* m_pPlatforms[9];
-	bool m_bSpaceOk;
-	vector<Box*> m_vec;
+	Mix_Music* m_pMusic;
+	vector<Mix_Chunk*> m_vSounds;
+	vector<Sprite*> m_pPlatforms;
+	vector<Sprite*> m_pObstacles;
+	Background* m_pBackground[2];
+	MidBackground* m_pMidBackground[5];
+	TextElement* t, * t2;
+	Timer* ti;
+	SDL_Texture* m_pBackgroundText;
 	SDL_Texture* m_pObsText;
 	SDL_Texture* m_pPlayerText;
-	int m_spawnCtr;
+	unsigned int m_distance;
+	int m_bestRecord;
+	bool m_bSpaceOk;
 public:
 	GameState();
 	void Enter();

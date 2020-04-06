@@ -17,25 +17,63 @@ public:
 	Sprite(const SDL_Rect s, const SDL_Rect d);
 	SDL_Rect* GetSrcP();
 	SDL_Rect* GetDstP();
-	friend class Box;
+	virtual SDL_Rect* GetCollisionRect();
+	virtual void Render(SDL_Texture* tex);
+	virtual void Update();
 };
 
-class Box
+class Spikes : public Sprite
+{
+public:
+	Spikes();
+};
+
+class Spikewall : public Sprite
+{
+public:
+	Spikewall();
+};
+
+class Circularsaw : public Sprite
 {
 private:
-	int m_x;
-	Sprite* m_sprite;
+	int m_angle;
 public:
-	Box(SDL_Rect s, SDL_Rect d, SDL_Texture* texture, bool hasSprite = false);
-	~Box();
+	Circularsaw();
+	void Render(SDL_Texture* tex) override;
+	void Update() override;
+};
+
+class Flyingplatform : public Sprite
+{
+public:
+	Flyingplatform();
+};
+
+class Background : public Sprite
+{
+public:
+	Background(const SDL_Rect d);
 	void Update();
-	void Render();
-	int GetX();
+};
+
+class MidBackground : public Sprite
+{
+public:
+	MidBackground(const SDL_Rect d);
+	void Update();
+};
+
+class Platform : public Sprite
+{
+public:
+	Platform(const SDL_Rect d);
 };
 
 class Player : public Sprite
 {
 private:
+	SDL_Rect m_collisionRect;
 	bool m_bGrounded;
 	double m_dAccelX,
 		m_dMaxAccelX,
@@ -58,7 +96,8 @@ private:
 	void SetAnimationState(STATE st, int y, int fmax, int smin, int smax);
 public:
 	Player(const SDL_Rect s, const SDL_Rect d);
-	void Update();
+	SDL_Rect* GetCollisionRect() override;
+	void Update() override;
 	void Animate();
 	void MoveX();
 	void Stop();
@@ -78,11 +117,4 @@ public:
 	void SetRunning();
 	void SetRolling();
 	void SetDeath();
-};
-
-// Platform doesn't have much in it right now. 
-class Platform : public Sprite
-{
-public:
-	Platform(const SDL_Rect d) :Sprite({ 0,0,0,0 }, d) {}
 };

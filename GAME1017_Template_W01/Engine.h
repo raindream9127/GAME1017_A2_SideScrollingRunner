@@ -6,8 +6,8 @@
 #include <vector>
 #include "Box.h"
 #include "FSM.h"
-#define GRAV 20.0
-#define JUMPFORCE 50.0
+#define GRAV 10.0
+#define JUMPFORCE 40.0
 using namespace std;
 // Do not include any macros, initialized properties or full function definitions in this header.
 
@@ -24,8 +24,6 @@ private: // Private properties.
 	FSM* m_pFSM; // Pointer to the StateMachine object created dynamically.
 	SDL_Point m_MousePos;
 	bool m_MouseState[3] = { 0,0,0 }; // Button up/down. Left, Middle, Right.
-	Mix_Music* m_pMusic;
-	vector<Mix_Chunk*> m_vSounds;
 private: // Private methods.
 	bool Init(const char* title, int xpos, int ypos, int width, int height, int flags);
 	void Wake();
@@ -48,5 +46,4 @@ public: // Public methods.
 	int GetHeight() { return m_iHeight; }
 	void SetMouseState(int idx, bool b);
 	void QuitGame();
-	Mix_Chunk* GetSound(int i) { return m_vSounds[i]; }
 };
